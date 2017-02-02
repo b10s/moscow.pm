@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>-_-</title>
+    <meta charset="utf-8">
+ <style>
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif);
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body {
+        font-family: 'Droid Serif';
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: 400;
+        margin-bottom: 0;
+      }
+      .remark-slide-content h1 { font-size: 3em; }
+      .remark-slide-content h2 { font-size: 2em; }
+      .remark-slide-content h3 { font-size: 1.6em; }
+      .footnote {
+        position: absolute;
+        bottom: 3em;
+      }
+      li p { line-height: 1.25em; }
+      .red { color: #fa0000; }
+      .blue { color: #0000ff; }
+      .olo {color: #3f3f3f;}
+      .large { font-size: 2em; }
+      a, a > code {
+        color: rgb(249, 38, 114);
+        text-decoration: none;
+      }
+      code {
+        background: #e7e8e2;
+        border-radius: 5px;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+      .remark-code-line-highlighted     { background-color: #373832; }
+      .pull-left {
+        float: left;
+        width: 47%;
+      }
+      .pull-right {
+        float: right;
+        width: 47%;
+      }
+      .pull-right ~ p {
+        clear: both;
+      }
+      #slideshow .slide .content code {
+        font-size: 0.8em;
+      }
+      #slideshow .slide .content pre code {
+        font-size: 0.9em;
+        padding: 15px;
+      }
+      .inverse {
+        background: #272822;
+        color: #777872;
+        text-shadow: 0 0 20px #333;
+      }
+      .inverse h1, .inverse h2 {
+        color: #f3f3f3;
+        line-height: 1.2em;
+      }
+
+      /* Slide-specific styling */
+      #slide-inverse .footnote {
+        bottom: 12px;
+        left: 20px;
+      }
+      #slide-how .slides {
+        font-size: 0.9em;
+        position: absolute;
+        top:  151px;
+        right: 140px;
+      }
+      #slide-how .slides h3 {
+        margin-top: 0.2em;
+      }
+      #slide-how .slides .first, #slide-how .slides .second {
+        padding: 1px 20px;
+        height: 90px;
+        width: 120px;
+        -moz-box-shadow: 0 0 10px #777;
+        -webkit-box-shadow: 0 0 10px #777;
+        box-shadow: 0 0 10px #777;
+      }
+      #slide-how .slides .first {
+        background: #fff;
+        position: absolute;
+        top: 20%;
+        left: 20%;
+        z-index: 1;
+      }
+      #slide-how .slides .second {
+        position: relative;
+        background: #fff;
+        z-index: 0;
+      }
+
+      /* Two-column layout */
+      .left-column {
+        color: #777;
+        width: 20%;
+        height: 92%;
+        float: left;
+      }
+        .left-column h2:last-of-type, .left-column h3:last-child {
+          color: #000;
+        }
+      .right-column {
+        width: 75%;
+        float: right;
+        padding-top: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+<!-- 1 -->
+
+# Введение в асинхронно-событийное программирование на Perl
+
+.footnote[ Еньшин Андрей / Облако @mail.ru ] 
+
+---
+class: center, middle
+
+# Введение в асинхронно-событийное программирование ~~на Perl~~
+
+.footnote[ Еньшин Андрей / Облако @mail.ru ] 
+
+---
+class: center, middle
+
+# На что действительно способен компьютер, если убрать такую абстракцию как ОС ?
+
+---
+class: center, middle
+
+# Из чего состоит компьютер?
+
+![cpu](img/cpu2.png "cpu") ![ram](img/ram.png "ram") ![lan](img/lan3.png "lan")
+
+---
+class: center, middle
+
+# Они могут работать параллельно
+
+---
+class: center, middle
+
+## - процессор может что-то складывать,
+## - на диск может идти запись из оперативной памяти
+## - сетевое устройство может принимать данные в свои внутренние буферы
+
+
+---
+class: center, middle
+
+# Типичные задачи требуют всех ресурсов компьютера: CPU, RAM, IO
+
+---
+class: middle
+
+
+## .center[  Например, работа веб-сервера: ]
+- ### прочитать запрос
+- ### обработать запрос
+- ### прочитать данные и отправить клиенту
+
+# 2 / 3  - это операции ввода-вывода
+
+---
+class: middle, center
+
+## на самом деле, .olo[IO] занимает около .red[99%] реального времени выполнения запроса
+## т.к. <b>CPU</b> во много раз быстрее .olo[IO]
+
+
+---
+class: middle
+# .center[Как мы пишем код?]
+
+
+```code
+read
+process
+read
+process
+write
+```
+
+## .center[IO -> CPU -> IO -> CPU -> IO]
+
+
+---
+class: middle, center
+
+# т.е. процессор проставивает в ожидании данных?
+
+---
+class: middle, center
+
+# <b>H E T</b>
+
+¿почему?
+
+---
+class: middle, center
+
+# Вернёся к ОС
+
+---
+class: middle
+
+# .center[ Зачем нужна ОС ? ]
+- ## управление аппаратным обеспечением
+- ## интерфейс для программиста
+
+
+---
+class: middle
+
+# .center[ ОС предоставляет нам абстракции ]
+
+- ## процессы
+- ## потоки
+- ## системные вызовы
+
+---
+class: middle
+# .center[ Процесс – экземпляр выполняемой программы ]
+- ## изолированное адресное пространство
+- ## свой список открытых файлов
+
+---
+class: middle
+
+# .center[ Поток – нить выполнения в рамках процесса ]
+
+- ## общее адресное пространство
+- ## общий список открытых файлов
+
+---
+class: middle
+
+# .center[ Системный вызов – это вызов подпрограммы, которая выполняется на уровне ядра в привилегированном режиме ]
+
+---
+class: middle
+
+# .center[ Все операции ввода-вывода это сисетмные вызовы ]
+
+- ### системный вызов ввода-вывода блокирует процесс, если данные не готовы
+- ### при этом иницируется чтение данных в оперативную память, где данные считаются доступными для обработки,
+- ### а пока данные читаются процессор переходит к выполнению другого процесса, у которого есть данные для обработки
+
+---
+
+class: middle
+
+## .center[ < CPU > ]
+## .center[ < IO > ]
+
+## .center[ веб-сервер: <b>IO -> CPU -> IO -> CPU -> IO</b> ]
+
+## .center[ фтп-сервер: <b>IO -> CPU -> IO -> CPU -> IO</b> ]
+
+---
+
+class: middle
+
+## .center[ < CPU > ]  
+## .center[ < .red[IO] > ]
+
+## .center[ .red[веб-сервер]: <b>.red[IO] -> CPU -> IO -> CPU -> IO</b> ]
+
+## .center[ фтп-сервер: <b>IO -> CPU -> IO -> CPU -> IO</b> ]
+
+---
+
+class: middle
+
+## .center[ < CPU > ]  
+## .center[ < .red[<b>IO</b>] > ]
+
+## .center[ веб-сервер: <b>IO -> CPU -> IO -> CPU -> IO</b> ]
+
+## .center[ .red[фтп-сервер]: <b>.red[IO] -> CPU -> IO -> CPU -> IO</b> ]
+
+---
+
+class: middle
+
+## .center[ < .red[CPU] > ]  
+## .center[ < .red[IO] > ]
+
+## .center[ .red[веб-сервер]: <b>IO -> .red[CPU] -> IO -> CPU -> IO</b> ]
+
+## .center[ фтп-сервер: <b>IO -> CPU -> IO -> CPU -> IO</b> ]
+
+---
+
+class: middle
+
+## .center[ < CPU > ]  
+## .center[ < .red[<b>IO</b>] > ]
+
+## .center[ .red[веб-сервер]: <b>IO -> CPU -> .red[IO] -> CPU -> IO</b> ]
+
+## .center[ фтп-сервер: <b>IO -> CPU -> IO -> CPU -> IO</b> ]
+
+---
+
+class: middle
+
+## .center[ < .red[CPU] > ]  
+## .center[ < .red[IO] > ]
+
+## .center[ веб-сервер: <b>IO -> CPU -> IO -> CPU -> IO</b> ]
+
+## .center[ .red[фтп-сервер]: <b>IO -> .red[CPU] -> IO -> CPU -> IO</b> ]
+
+---
+
+class: middle
+
+## .center[ < .red[CPU] > ]  
+## .center[ < .red[<b>IO</b>] > ]
+
+## .center[ веб-сервер: <b>IO -> CPU -> IO -> CPU -> IO</b> ]
+
+## .center[ .red[фтп-сервер]: <b>IO -> CPU -> .red[IO] -> CPU -> IO</b> ]
+
+---
+
+class: middle
+
+## .center[ < .red[CPU] > ]  
+## .center[ < .red[IO] > ]
+
+## .center[ .red[веб-сервер]: <b>IO -> CPU -> IO -> .red[CPU] -> IO</b> ]
+
+## .center[ фтп-сервер: <b>IO -> CPU -> IO -> CPU -> IO</b> ]
+
+---
+
+class: middle
+
+## .center[ < CPU > ]  
+## .center[ < .red[<b>IO</b>] > ]
+
+## .center[ .red[веб-сервер]: <b>IO -> CPU -> IO -> CPU -> .red[IO]</b> ]
+
+## .center[ фтп-сервер: <b>IO -> CPU -> IO -> CPU -> IO</b> ]
+
+---
+
+class: middle
+
+## .center[ < CPU > ]  
+## .center[ < .red[<b>IO</b>] > ]
+
+## .center[ веб-сервер: <b>IO -> CPU -> IO -> CPU -> IO</b> ]
+
+## .center[ фтп-сервер: <b>IO -> CPU -> IO -> CPU -> IO</b> ]
+
+---
+
+class: middle
+
+## .center[ < CPU > ]  
+## .center[ < .red[IO] > ]
+
+## .center[ веб-сервер: <b>IO -> CPU -> IO -> CPU -> IO</b> ]
+
+## .center[ фтп-сервер: <b>IO -> CPU -> IO -> CPU -> IO</b> ]
+
+---
+
+class: middle
+
+## .center[ < CPU > ]  
+## .center[ < IO > ]
+
+## .center[ веб-сервер: <b>IO -> CPU -> IO -> CPU -> IO</b> ]
+
+## .center[ .red[фтп-сервер]: <b>IO -> CPU -> IO -> .red[CPU] -> IO</b> ]
+
+---
+
+class: middle
+
+## .center[ < CPU > ]  
+## .center[ < .red[IO] > ]
+
+## .center[ веб-сервер: <b>IO -> CPU -> IO -> CPU -> IO</b> ]
+
+## .center[ .red[фтп-сервер]: <b>IO -> CPU -> IO -> CPU -> .red[IO]</b> ]
+
+---
+
+class: middle
+
+## .center[ < CPU > ]  
+## .center[ < IO > ]
+
+## .center[ веб-сервер: <b>IO -> CPU -> IO -> CPU -> IO</b> ]
+
+## .center[ фтп-сервер: <b>IO -> CPU -> IO -> CPU -> IO</b> ]
+
+---
+
+class: middle, center
+
+# Так работают большинство программ
+
+---
+class: center
+# Веб-сервер как процесс
+
+### IO → CPU → IO → CPU → IO
+
+## мы можем создать много копий
+
+### IO → CPU → IO → CPU → IO
+### IO → CPU → IO → CPU → IO
+### IO → CPU → IO → CPU → IO
+
+---
+class: center
+# Веб-сервер как процесс
+
+### <b>плюсы</b>:
+- ### появляется псевдо-многозадачность за счёт переключения процессов(контекста)
+
+### <b>минусы</b>:
+- ### переключения между процессам дороги;
+- ### каждый процесс потребляет много памяти
+- ### проблема 10 000 соединений
+
+---
+class: center
+# Веб-сервер как процесс
+
+## всё что нужно знать про процессы это <b>fork</b>
+
+.footnote[ну, ещё waitpid, %SIG,...]
+---
+class: center
+# Многопоточный веб-сервер
+
+### IO → CPU → IO → CPU → IO
+### IO → CPU → IO → CPU → IO
+### IO → CPU → IO → CPU → IO
+
+---
+class: center
+# Многопоточный веб-сервер
+### <b>плюсы</b>:
+- ### недорогое переключение между потоками
+
+### <b>минусы</b>:
+- ### нет полного контроля: переключать будет менеджера потоков
+- ### усложняется логика программы: общие данные, критические секции и вот это всё
+
+---
+
+# .center[Многопоточный веб-сервер]
+### про потоки в Perl или ничего или только хорошее, поэтому ничего
+</br>
+</br>
+
+`The use of interpreter-based threads in perl is officially discouraged.`
+https://metacpan.org/pod/threads#WARNING
+</br>
+</br>
+</br>
+`From time to time, we may mark language constructs and features which we consider to have been mistakes as discouraged.`
+https://metacpan.org/pod/perlpolicy#discouraged
+</br>
+</br>
+</br>
+`Coro - the only real threads in perl`
+ </br>
+Marc A. Lehmann
+
+---
+class: center
+# Неблокирующие операции IO
+
+### <b>плюсы</b>:
+- ### мы сами отдаём управление, когда нет данных для обработки
+- ### не нужно блокировать процесс/поток
+
+### <b>минусы</b>:
+- ### логика написания программ слегка усложняется
+
+---
+# .center[Неблокирующие операции IO]
+
+.center[Это вызов read на дескрипторе у которого установлен флаг O_NONBLOCK]
+
+```perl
+use Fcntl qw(F_GETFL F_SETFL O_NONBLOCK);
+use Errno qw(EAGAIN EWOULDBLOCK);
+
+$flags = fcntl($fd, F_GETFL, 0)
+    or die "Can't get flags for the socket: $!\n";
+
+$flags = fcntl($fd, F_SETFL, $flags | O_NONBLOCK)
+    or die "Can't set flags for the socket: $!\n";
+
+
+my $read = sysread($fd, my $buf, SOMELENGTH);
+
+if ($read) { # read >= 0
+    # work with data in buf
+}
+elsif (defined $read) { # read == 0
+    # socket was closed
+}
+elsif ( $! ~~ [ EAGAIN, EWOULDBLOCK ] ) {
+    # socket not ready for reading
+}
+else {
+    # socket was closed with error $!
+}
+```
+
+---
+# .center[Event loop 1.0]
+
+
+```perl
+while (1) {
+    for my $fh (@fds) {
+        my $res = read($fh, ...);
+        if ($res) {
+            # do work
+        }
+        elsif ($! ~~ FATAL_ERROR) {
+            # close fh, remove from @fds
+        }
+    }
+}
+```
+
+---
+# .center[Event loop 1.0]
+
+```perl
+while (1) {
+    for my $fh (@fds) {
+        my $res = read($fh, ...);
+        if ($res) {
+            # do work
+        }
+        elsif ($! ~~ FATAL_ERROR) {
+            # close fh, remove from @fds
+        }
+    }
+}
+```
+
+## пробелмы:
+- ### так называемая спин-блокировка – активное ожидание
+- ### всё время опрашивать 100500 дескрипторов неготовых к чтению
+
+---
+# .center[Системный вызов select]
+
+```perl
+select RBITS,WBITS,EBITS,TIMEOUT
+```
+perldoc -f select
+
+- ### проверка, будет ли попытка IO заблокирована до самой попытки
+- ### можем наблюдать сразу за большим количеством дескрипторов
+- ### нет спин блокировки
+
+.footnote[ .left[ещё есть poll, epoll, kqueue - принцип один; select менее производителен, проще; ] ]
+
+---
+# .center[Event loop 2.0]
+
+```perl
+
+socket( my $server, ...);
+
+vec( $server_bit_mask, fileno($server), 1) = 1;
+$rbits = $server_bit_mask;
+
+while( 1 ) {
+	# block until data will be ready for all $rbits
+	my $nfound = select( $rout=$rbits, undef, undef, undef);
+	# if server ready to get new connection
+	if( $server_bit_mask & $rout ) {
+		while( accept(my $client_conn, $server) ) {
+			vec( $clients_bit_mask, fileno($client_conn), 1) = 1;
+		}
+	}
+	# if client sent data
+	if( $clients_bit_mask & $rout ) {
+		# read data from client
+	}
+
+	$rbits |= $clients_bit_mask;
+
+}
+```
+
+---
+# .center[Event loop 2.0]
+
+```perl
+
+socket( my $server, ...);
+
+vec( $server_bit_mask, fileno($server), 1) = 1;
+$rbits = $server_bit_mask;
+
+while( 1 ) {
+	# block until data will be ready for all $rbits
+	my $nfound = select( $rout=$rbits, undef, undef, undef);
+	# if server ready to get new connection
+	if( $server_bit_mask & $rout ) {
+		while( accept(my $client_conn, $server) ) {
+			vec( $clients_bit_mask, fileno($client_conn), 1) = 1;
+		}
+	}
+	# if client sent data
+	if( $clients_bit_mask & $rout ) {
+		# read data from client
+	}
+
+	$rbits |= $clients_bit_mask;
+
+}
+```
+## проблемы: громоздкий интерфейс, битовые маски
+
+---
+# .center[IO::Select]
+
+```perl
+use IO::Select;
+$s = IO::Select->new();
+$s->add(\*STDIN);
+$s->add($some_handle); 
+@ready = $s->can_read($timeout);
+@ready = IO::Select->new(@handles)->can_read(0);
+```
+
+модуль ядра, предоставляет удобный интерфейс к select
+
+---
+# .center[Event loop 2.1]
+
+```perl
+use IO::Select;
+
+my $s = IO::Select->new();
+my $timeout = 1;
+# prepare program...
+
+my $fd = socket...
+wait_socket_readable($fd, sub {
+    read($fd, ...)
+})
+# ...
+our %waiters;
+sub wait_socket_readable {
+    my ($fd,$cb) = @_;
+    $select->add($fd);
+    push @{ $waiters{ fileno($fd) } }, $cb;
+}
+# Event loop:
+while () {
+    my @ready = $s->can_read($timeout);
+    for my $fd (@ready) {
+        for my $cb ( @{ $waiters{$fd} } ) {
+            $cb->();
+        }
+    }
+}
+```
+
+---
+# .center[Event loop 2.1]
+
+
+```perl
+my $fd = socket...
+
+wait_socket_readable($fd, sub {
+    sysread($fd, ...);
+
+    wait_socket_writable($fd, sub {
+        syswrite($fd, ...);
+
+        wait_socket_readable($fd, sub {
+            sysread($fd, ...);
+
+            # ...
+        });
+    });
+});
+```
+
+## теперь мы можем писать линейно* код, который будет выполняться нелинейно т.е. асинхронный код
+
+.footnote[ *совсем линейно, c точки зрения оформления, без отступов и колбека в колбеке, позволит писать Async::Chain - https://metacpan.org/pod/Async::Chain]
+
+---
+#.center[Таймеры]
+
+```perl
+wait_timeout 1, sub { ... };
+
+our @deadlines;
+sub wait_timeout {
+    my ($t,$cb) = @_;
+    my $deadline = time + $t;
+    @deadlines =
+        sort { $a->[0] <=> $b->[0] }
+        @deadlines, [ $deadline, $cb ];
+}
+
+# Event loop:
+while () {
+    #...
+    while ($deadlines[0][0] <= time) {
+        my $next = shift(@deadlines);
+        my $cb = $next->[1];
+        $cb->();
+    }
+}
+```
+
+---
+#.center[Таймеры]
+
+```perl
+wait_timeout 1, sub { ... };
+
+our @deadlines;
+sub wait_timeout {
+    my ($t,$cb) = @_;
+    my $deadline = time + $t;
+    @deadlines =
+        sort { $a->[0] <=> $b->[0] }
+        @deadlines, [ $deadline, $cb ];
+}
+
+# Event loop:
+while () {
+    #...
+    while ($deadlines[0][0] <= time) {
+        my $next = shift(@deadlines);
+        my $cb = $next->[1];
+        $cb->();
+    }
+}
+
+wait_timeout 1, sub {
+    my $sub; $sub = sub {
+        wait_timeout 0, $sub;
+    }; $sub->();
+};
+```
+
+---
+#.center[Таймеры]
+```perl
+our $now;
+our @deadlines;
+
+sub wait_timeout {
+    my ($t,$cb) = @_;
+    my $deadline = $now + $t;
+    @deadlines =
+        sort { $a->[0] <=> $b->[0] }
+        @deadlines, [ $deadline, $cb ];
+}
+# Event loop:
+while () {
+    $now = time;
+    #...
+    my @exec;
+    push @exec, shift @deadlines while ($deadlines[0][0] <= $now);
+    for my $dl (@exec) {
+        $dl->[1]->();
+    }
+}
+
+```
+
+- $now - колбек сможет опираться на время тайм-фрейма вне зависимости от того, как долго выполнялись другие
+- @exec - позволит избежать зацикливания колбеков
+
+---
+#.center[AnyEvent]
+
+```perl
+use AnyEvent;
+ 
+# file handle or descriptor readable
+my $w = AnyEvent->io (fh => $fh, poll => "r", cb => sub { ...  });
+
+# one-shot or repeating timers
+my $w = AnyEvent->timer (after => $seconds, cb => sub { ...  });
+my $w = AnyEvent->timer (after => $seconds, interval => $seconds, cb => ...);
+print AnyEvent->now;  # prints current event loop time
+print AnyEvent->time; # think Time::HiRes::time or simply CORE::time.
+
+# POSIX signal
+my $w = AnyEvent->signal (signal => "TERM", cb => sub { ... });
+# child process exit
+my $w = AnyEvent->child (pid => $pid, cb => sub {
+   my ($pid, $status) = @_;
+   ...
+});
+
+# called when event loop idle (if applicable)
+my $w = AnyEvent->idle (cb => sub { ... });
+
+my $w = AnyEvent->condvar; # stores whether a condition was flagged
+$w->send; # wake up current and all future recv's
+$w->recv; # enters "main loop" till $condvar gets ->send
+# use a condvar in callback mode:
+$w->cb (sub { $_[0]->recv });
+```
+
+---
+#.center[AnyEvent]
+
+```perl
+AnyEvent->io( fd=>\*STDIN, poll=>'r',
+    cb => sub {
+        my $line = <STDIN>;
+        AnyEvent->io( fd=>\*STDOUT, poll=>'w',
+            cb => sub {
+                print $line;
+            }
+        );
+    }
+);
+```
+---
+# .center[Спаcибо]
+
+`"Perl. Асинхронно-событийное программирование"` В. Перепелица
+https://it.mail.ru/video/398/
+
+`"Современные операционные системы"` Э. Таненбаум, Х. Бос
+https://www.ozon.ru/context/detail/id/31649356/
+
+`"AnyEvent::Intro - an introductory tutorial to AnyEvent"` Marc A. Lehmann
+https://metacpan.org/pod/distribution/AnyEvent/lib/AnyEvent/Intro.pod
+
+
+
+
+
+
+    </textarea>
+    <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create();
+    </script>
+  </body>
+</html>
